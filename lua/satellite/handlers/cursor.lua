@@ -40,9 +40,9 @@ function handler.setup(user_config, update)
 
   setup_hl()
 
-  api.nvim_create_autocmd({ 'CursorMoved', 'CursorMovedI' }, {
+  api.nvim_create_autocmd({ 'CursorMoved' }, {
     group = group,
-    callback = update,
+    callback = vim.schedule_wrap(update),
   })
 end
 

@@ -153,7 +153,6 @@ end
 local function can_show_scrollbar(winid)
   local bufnr = api.nvim_win_get_buf(winid)
   local buf_filetype = vim.bo[bufnr].filetype
-
   -- Skip if the filetype is on the list of exclusions.
   if vim.tbl_contains(user_config.excluded_filetypes, buf_filetype) then
     return false
@@ -223,7 +222,7 @@ local function get_target_windows()
 end
 
 --- @param winid integer
-local function close(winid)
+function satellite_close(winid)
   util.invalidate_virtual_line_count_cache(winid)
   local bar_winid = winids[winid]
   if not bar_winid then
@@ -240,29 +239,58 @@ local function close(winid)
 end
 
 function M.refresh_bars()
-  local current_bar_wins = {} --- @type integer[]
-
-  if enabled then
-    for _, winid in ipairs(get_target_windows()) do
-      if can_show_scrollbar(winid) then
-        local bwinid = get_or_create_view(winid)
-        render(bwinid, winid)
-        current_bar_wins[#current_bar_wins + 1] = bwinid
+  if not vim.b.ts_parse_over then
+    -- Close any remaining bars
+    for winid, _ in pairs(winids) do
+      pcall(function()
+        satellite_close(winid)
+      end)
+    end
+    local has_find = false
+    local timer = vim.uv.new_timer()
+    vim.defer_fn(function()
+      if timer:is_active() then
+        timer:close()
+      end
+    end, 100)
+    timer:start(5, 5, function()
+      if vim.b.ts_parse_over then
+        if has_find then
+          return
+        end
+        has_find = true
+        if timer:is_active() then
+          timer:close()
+        end
+        vim.schedule(function()
+          M.refresh_bars()
+        end)
+      end
+    end)
+  else
+    local current_bar_wins = {} --- @type integer[]
+    if enabled then
+      for _, winid in ipairs(get_target_windows()) do
+        if can_show_scrollbar(winid) then
+          local bwinid = get_or_create_view(winid)
+          render(bwinid, winid)
+          current_bar_wins[#current_bar_wins + 1] = bwinid
+        end
       end
     end
-  end
 
-  -- Close any remaining bars
-  for winid, bwinid in pairs(winids) do
-    if not vim.tbl_contains(current_bar_wins, bwinid) then
-      close(winid)
+    -- Close any remaining bars
+    for winid, bwinid in pairs(winids) do
+      if not vim.tbl_contains(current_bar_wins, bwinid) then
+        satellite_close(winid)
+      end
     end
   end
 end
 
 function M.remove_bars()
   for winid, _ in pairs(winids) do
-    close(winid)
+    satellite_close(winid)
   end
 end
 

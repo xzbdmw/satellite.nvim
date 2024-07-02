@@ -55,7 +55,8 @@ local function get_pattern()
   if is_search_mode() then
     return vim.fn.getcmdline()
   end
-  return vim.v.hlsearch == 1 and fn.getreg('/') --[[@as string]] or ''
+  return vim.v.hlsearch == 1 and fn.getreg('/') --[[@as string]]
+    or ''
 end
 
 --- @param bufnr integer
@@ -202,7 +203,7 @@ function handler.update(bufnr, winid)
       pos = pos,
       unique = mark.unique,
       highlight = mark.highlight or HIGHLIGHT,
-      symbol = mark.symbol or config.symbols[mark.count] or config.symbols[#config.symbols],
+      symbol = '≡',
     }
   end
 

@@ -53,13 +53,15 @@ function handler.setup(config0, update)
   api.nvim_create_autocmd('DiagnosticChanged', {
     group = group,
     callback = function(args)
-      --- vim.diagnostic.get() is expensive as it runs vim.deepcopy() on every
-      --- call. Keep a local copy that is only updated when diagnostics change.
+      local mode = vim.api.nvim_get_mode()
+      if mode.mode == 'i' then
+        return
+      end
       local bufnr = args.buf
       buf_diags[bufnr] = args.data.diagnostics
 
       update()
-    end
+    end,
   })
 end
 

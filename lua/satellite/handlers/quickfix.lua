@@ -33,6 +33,11 @@ function handler.setup(config0, update)
 
   setup_hl()
 
+  vim.api.nvim_create_autocmd('User', {
+    pattern = 'SatelliteRedresh',
+    callback = update,
+  })
+
   vim.api.nvim_create_autocmd('QuickFixCmdPost', {
     group = group,
     callback = update,

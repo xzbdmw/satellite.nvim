@@ -156,10 +156,13 @@ function M.register(spec)
 end
 
 local did_init = false
-
+local handler_count = 0
 --- @param bwinid integer
 --- @param winid integer
 function M.render(bwinid, winid)
+  if vim.g.gd then
+    return
+  end
   M.init()
 
   -- Run handlers
@@ -170,7 +173,7 @@ function M.render(bwinid, winid)
 end
 
 function M.init()
-  if did_init then
+  if did_init and handler_count == #M.handlers then
     return
   end
 
@@ -191,6 +194,7 @@ function M.init()
       h.setup(user_config.handlers[h.name] or {}, update)
     end
   end
+  handler_count = #M.handlers
 end
 
 return M
