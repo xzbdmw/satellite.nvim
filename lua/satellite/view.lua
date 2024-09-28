@@ -160,9 +160,9 @@ local function can_show_scrollbar(winid)
 
   -- Don't show in terminal mode, since the bar won't be properly updated for
   -- insertions.
-  if is_terminal(winid) then
-    return false
-  end
+  -- if is_terminal(winid) then
+  --   return false
+  -- end
 
   if util.in_cmdline_win(winid) then
     return false
@@ -239,7 +239,7 @@ function satellite_close(winid)
 end
 
 function M.refresh_bars()
-  if not vim.b.ts_parse_over then
+  if (not vim.b.ts_parse_over) and vim.bo.filetype ~= 'toggleterm' then
     -- Close any remaining bars
     for winid, _ in pairs(winids) do
       pcall(function()
