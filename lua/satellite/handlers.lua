@@ -160,15 +160,38 @@ local handler_count = 0
 --- @param bwinid integer
 --- @param winid integer
 function M.render(bwinid, winid)
-  if vim.g.gd then
-    return
-  end
-  M.init()
+  local render_fn = function()
+    M.init()
 
-  -- Run handlers
-  -- Each render function is a void async function so this loop should finish immediately
-  for _, handler in ipairs(M.handlers) do
-    handler:render(winid, bwinid)
+    -- Run handlers
+    -- Each render function is a void async function so this loop should finish immediately
+    for _, handler in ipairs(M.handlers) do
+      if api.nvim_win_is_valid(winid) and api.nvim_win_is_valid(bwinid) then
+        handler:render(winid, bwinid)
+      end
+    end
+  end
+
+  local start = vim.uv.hrtime()
+  local function follow_node()
+    local duration = 0.000001 * (vim.loop.hrtime() - start)
+    if duration > 2000 then
+      return
+    end
+    if vim.b.ts_parse_over then
+      render_fn()
+    else
+      vim.defer_fn(follow_node, 5)
+    end
+  end
+
+  local parser_installed = require('nvim-treesitter.parsers').has_parser(vim.bo.filetype)
+  if parser_installed then
+    render_fn()
+  else
+    vim.defer_fn(function()
+      render_fn()
+    end, 20)
   end
 end
 
