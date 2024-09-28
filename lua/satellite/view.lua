@@ -114,6 +114,10 @@ local function get_or_create_view(winid)
   end
 
   if bar_winid and api.nvim_win_is_valid(bar_winid) then
+    if vim.bo.filetype == 'toggleterm' then
+      cfg.width = 1
+      cfg.col = cfg.col + 1
+    end
     api.nvim_win_set_config(bar_winid, cfg)
   else
     bar_winid = create_view(cfg)
