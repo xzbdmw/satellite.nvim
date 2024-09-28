@@ -82,18 +82,46 @@ function Handler:apply_mark(bufnr, m, max_pos)
     id = not m.unique and m.pos + 1 or nil,
     priority = self.config.priority,
   }
-
-  if self.config.overlap ~= false then
+  local cc = 0
+  if self.config.overlap then
     opts.virt_text = { { m.symbol, m.highlight } }
     opts.virt_text_pos = 'overlay'
     opts.hl_mode = 'combine'
+    local bar_winid = vim.fn.win_findbuf(bufnr)[1]
+
+    local cfg = vim.api.nvim_win_get_config(bar_winid)
+    if bar_winid and cfg.width == 2 then
+      local hunks =
+        require('gitsigns.actions').get_nav_hunks(api.nvim_get_current_buf(), 'all', true)
+      if hunks == nil or #hunks == 0 then
+        cc = 0
+        cfg.col = cfg.col + 1
+        cfg.width = 1
+        if bar_winid and api.nvim_win_is_valid(bar_winid) then
+          api.nvim_win_set_config(bar_winid, cfg)
+        end
+      else
+        cc = 1
+      end
+    end
   else
     -- Signs are 2 chars so fill the first char with whitespace
-    opts.sign_text = ' ' .. m.symbol
-    opts.sign_hl_group = m.highlight
+    opts.virt_text = { { m.symbol, m.highlight } }
+    opts.virt_text_pos = 'overlay'
+    cc = 0
+    local bar_winid = vim.fn.win_findbuf(bufnr)[1]
+    local cfg = vim.api.nvim_win_get_config(bar_winid)
+    if bar_winid and cfg.width ~= 2 then
+      cfg.col = cfg.col - 1
+      cfg.width = 2
+    end
+
+    if bar_winid and api.nvim_win_is_valid(bar_winid) then
+      api.nvim_win_set_config(bar_winid, cfg)
+    end
   end
 
-  local ok, err = pcall(api.nvim_buf_set_extmark, bufnr, self.ns, m.pos, 0, opts)
+  local ok, err = pcall(api.nvim_buf_set_extmark, bufnr, self.ns, m.pos, cc, opts)
   if not ok then
     print(
       string.format(

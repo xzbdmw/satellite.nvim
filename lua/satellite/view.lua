@@ -107,7 +107,7 @@ local function get_or_create_view(winid)
     local bar_wininfo = vim.fn.getwininfo(bar_winid)[1]
     -- wininfo can be nil when pressing <C-w>o in help buffers
     if bar_wininfo then
-      local signwidth = bar_wininfo.textoff
+      local signwidth = 1
       cfg.col = cfg.col - signwidth
       cfg.width = cfg.width + signwidth
     end

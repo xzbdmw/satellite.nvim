@@ -82,7 +82,7 @@ function handler.update(bufnr, winid)
     local max_pos = util.row_to_barpos(winid, max_lnum - 1)
 
     for pos = min_pos, max_pos do
-      marks[#marks+1] = {
+      marks[#marks + 1] = {
         pos = pos,
         symbol = symbol,
         highlight = hl,
