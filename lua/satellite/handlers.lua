@@ -43,7 +43,8 @@ local async = require 'satellite.async'
 local Handler = {}
 
 local M = {}
-
+M.sign_ns = vim.api.nvim_create_namespace('satellite_sign')
+M.gits_sign_ns = vim.api.nvim_create_namespace('satellite_gitsign')
 local BUILTIN_HANDLERS = {
   'search',
   'diagnostic',
@@ -82,7 +83,7 @@ function Handler:apply_mark(bufnr, m, max_pos)
     id = not m.unique and m.pos + 1 or nil,
     priority = self.config.priority,
   }
-  local cc = 0
+  local start_col = 0
   if self.config.overlap then
     opts.virt_text = { { m.symbol, m.highlight } }
     opts.virt_text_pos = 'overlay'
@@ -94,21 +95,38 @@ function Handler:apply_mark(bufnr, m, max_pos)
       local hunks =
         require('gitsigns.actions').get_nav_hunks(api.nvim_get_current_buf(), 'all', true)
       if hunks == nil or #hunks == 0 then
-        cc = 0
+        start_col = 0
         cfg.col = cfg.col + 1
         cfg.width = 1
         if bar_winid and api.nvim_win_is_valid(bar_winid) then
           api.nvim_win_set_config(bar_winid, cfg)
         end
       else
-        cc = 1
+        start_col = 1
       end
+    end
+    if m.highlight:find('Cursor', nil, true) then
+      local win_info = vim.fn.getwininfo(vim.api.nvim_get_current_win())[1]
+      local topline = 0
+      if win_info ~= nil then
+        topline = win_info.topline
+      end
+      local line = topline + m.pos - 1
+      local id = line
+      if line > vim.api.nvim_buf_line_count(0) then
+        line = vim.api.nvim_buf_line_count(0) - 1
+      end
+      pcall(vim.api.nvim_buf_set_extmark, 0, M.sign_ns, line, 0, {
+        sign_text = '',
+        priority = 100,
+        sign_hl_group = 'SignCursor',
+      })
     end
   else
     -- Signs are 2 chars so fill the first char with whitespace
     opts.virt_text = { { m.symbol, m.highlight } }
     opts.virt_text_pos = 'overlay'
-    cc = 0
+    start_col = 0
     local bar_winid = vim.fn.win_findbuf(bufnr)[1]
     local cfg = vim.api.nvim_win_get_config(bar_winid)
     if bar_winid and cfg.width ~= 2 then
@@ -121,7 +139,7 @@ function Handler:apply_mark(bufnr, m, max_pos)
     end
   end
 
-  local ok, err = pcall(api.nvim_buf_set_extmark, bufnr, self.ns, m.pos, cc, opts)
+  ok, err = pcall(api.nvim_buf_set_extmark, bufnr, self.ns, m.pos, start_col, opts)
   if not ok then
     print(
       string.format(
@@ -161,6 +179,7 @@ Handler.render = async.void(function(self, winid, bwinid)
     return
   end
 
+  api.nvim_buf_clear_namespace(0, M.sign_ns, 0, -1)
   api.nvim_buf_clear_namespace(bbufnr, self.ns, 0, -1)
 
   for _, m in ipairs(marks) do
