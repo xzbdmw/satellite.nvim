@@ -103,21 +103,8 @@ local function get_or_create_view(winid)
   }
 
   local bar_winid = winids[winid]
-  if bar_winid then
-    local bar_wininfo = vim.fn.getwininfo(bar_winid)[1]
-    -- wininfo can be nil when pressing <C-w>o in help buffers
-    if bar_wininfo then
-      local signwidth = 1
-      cfg.col = cfg.col - signwidth
-      cfg.width = cfg.width + signwidth
-    end
-  end
 
   if bar_winid and api.nvim_win_is_valid(bar_winid) then
-    if vim.bo.filetype == 'toggleterm' then
-      cfg.width = 1
-      cfg.col = cfg.col + 1
-    end
     api.nvim_win_set_config(bar_winid, cfg)
   else
     bar_winid = create_view(cfg)

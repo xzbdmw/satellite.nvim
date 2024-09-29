@@ -202,8 +202,8 @@ function handler.update(bufnr, winid)
     ret[#ret + 1] = {
       pos = pos,
       unique = mark.unique,
-      highlight = mark.highlight or HIGHLIGHT,
-      symbol = '≡',
+      highlight = HIGHLIGHT,
+      symbol = '=',
     }
   end
 
