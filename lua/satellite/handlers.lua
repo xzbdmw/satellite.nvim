@@ -97,19 +97,14 @@ function Handler:apply_mark(bufnr, m, max_pos)
       if #hunks == 0 and vim.fn.getcmdline() == '' and vim.v.hlsearch == 0 then
         cfg.col = cfg.col + 1
         cfg.width = 1
-        if
-          bar_winid
-          and api.nvim_win_is_valid(bar_winid)
-          and vim.fn.getcmdline() == ''
-          and vim.v.hlsearch == 0
-        then
+        if bar_winid and api.nvim_win_is_valid(bar_winid) then
           api.nvim_win_set_config(bar_winid, cfg)
         end
       else
         start_col = 1
       end
     end
-    if m.highlight:find('Cursor', nil, true) then
+    if m.highlight:find('Cursor', nil, true) and vim.wo.signcolumn == 'yes' then
       local win_info = vim.fn.getwininfo(vim.api.nvim_get_current_win())[1]
       local topline = 0
       if win_info ~= nil then
