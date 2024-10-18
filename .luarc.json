@@ -28,5 +28,8 @@
       "strict": "Warning"
     },
     "unusedLocalExclude": [ "_*" ]
-  }
+  },
+    "diagnostics.disable": [
+        "no-unknown"
+    ]
 }

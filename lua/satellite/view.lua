@@ -233,7 +233,8 @@ function satellite_close(winid)
 end
 
 function M.refresh_bars()
-  if (not vim.b.ts_parse_over) and vim.bo.filetype ~= 'toggleterm' then
+  local parser_installed = require('nvim-treesitter.parsers').has_parser(vim.bo.filetype)
+  if (not vim.b.ts_parse_over) and vim.bo.filetype ~= 'toggleterm' and parser_installed then
     -- Close any remaining bars
     for winid, _ in pairs(winids) do
       pcall(function()
