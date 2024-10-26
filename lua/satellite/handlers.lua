@@ -104,23 +104,6 @@ function Handler:apply_mark(bufnr, m, max_pos)
         start_col = 1
       end
     end
-    if m.highlight:find('Cursor', nil, true) and vim.wo.signcolumn == 'yes' then
-      local win_info = vim.fn.getwininfo(vim.api.nvim_get_current_win())[1]
-      local topline = 0
-      if win_info ~= nil then
-        topline = win_info.topline
-      end
-      local line = topline + m.pos - 1
-      local id = line
-      if line > vim.api.nvim_buf_line_count(0) then
-        line = vim.api.nvim_buf_line_count(0) - 1
-      end
-      pcall(vim.api.nvim_buf_set_extmark, 0, M.sign_ns, line, 0, {
-        sign_text = '',
-        priority = 100,
-        sign_hl_group = 'SignCursor',
-      })
-    end
   else
     -- Signs are 2 chars so fill the first char with whitespace
     opts.virt_text = { { m.symbol, m.highlight } }
@@ -134,6 +117,7 @@ function Handler:apply_mark(bufnr, m, max_pos)
     end
 
     if bar_winid and api.nvim_win_is_valid(bar_winid) then
+      vim.g.satellite_width = cfg.width
       api.nvim_win_set_config(bar_winid, cfg)
     end
   end
