@@ -123,18 +123,18 @@ function Handler:apply_mark(bufnr, m, max_pos)
   end
 
   ok, err = pcall(api.nvim_buf_set_extmark, bufnr, self.ns, m.pos, start_col, opts)
-  if not ok then
-    print(
-      string.format(
-        'error(satellite.nvim): handler=%s buf=%d row=%d opts=%s, err="%s"',
-        self.name,
-        bufnr,
-        m.pos,
-        vim.inspect(opts, { newline = ' ', indent = '' }),
-        err
-      )
-    )
-  end
+  -- if not ok then
+  --   print(
+  --     string.format(
+  --       'error(satellite.nvim): handler=%s buf=%d row=%d opts=%s, err="%s"',
+  --       self.name,
+  --       bufnr,
+  --       m.pos,
+  --       vim.inspect(opts, { newline = ' ', indent = '' }),
+  --       err
+  --     )
+  --   )
+  -- end
 end
 
 --- @package
@@ -142,6 +142,8 @@ end
 --- @param winid integer
 --- @param bwinid integer
 Handler.render = async.void(function(self, winid, bwinid)
+  -- __AUTO_GENERATED_PRINT_VAR_START__
+  -- print([==[function pos:]==], vim.inspect(pos)) -- __AUTO_GENERATED_PRINT_VAR_END__
   if not self:enabled() then
     return
   end
@@ -197,7 +199,9 @@ function M.render(bwinid, winid)
     -- Each render function is a void async function so this loop should finish immediately
     for _, handler in ipairs(M.handlers) do
       if api.nvim_win_is_valid(winid) and api.nvim_win_is_valid(bwinid) then
-        handler:render(winid, bwinid)
+        if handler.name ~= 'search' then
+          handler:render(winid, bwinid)
+        end
       end
     end
   end

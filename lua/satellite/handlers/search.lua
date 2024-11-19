@@ -4,8 +4,6 @@ local fn = vim.fn
 local util = require 'satellite.util'
 local async = require 'satellite.async'
 
-require 'satellite.autocmd.search'
-
 local HIGHLIGHT = 'SatelliteSearch'
 local HIGHLIGHT_CURRENT = 'SatelliteSearchCurrent'
 
@@ -13,7 +11,7 @@ local HIGHLIGHT_CURRENT = 'SatelliteSearchCurrent'
 local config = {
   enable = true,
   overlap = true,
-  priority = 10,
+  priority = 1000,
   symbols = { '⠂', '⠅', '⠇', '⠗', '⠟', '⠿' },
 }
 
@@ -62,59 +60,6 @@ end
 --- @param bufnr integer
 --- @param pattern? string
 --- @return table<integer,integer>
-local function update_matches(bufnr, pattern)
-  pattern = pattern or get_pattern()
-  pattern = smartcaseify(pattern)
-
-  if
-    cache[bufnr]
-    and cache[bufnr].changedtick == vim.b[bufnr].changedtick
-    and (not pattern or cache[bufnr].pattern == pattern)
-  then
-    return cache[bufnr].matches
-  end
-
-  local matches = {} --- @type table<integer,integer>
-
-  if pattern and pattern ~= '' then
-    local lines = api.nvim_buf_get_lines(bufnr, 0, -1, true)
-
-    local pred = async.winbuf_pred(bufnr)
-
-    for lnum, line in async.ipairs(lines, pred) do
-      local count = 1
-      repeat
-        local ok, col = pcall(fn.match, line, pattern, 0, count)
-        if not ok then
-          -- Make sure no lines match any error-causing regex pattern.
-          matches[lnum] = 0
-          break
-        elseif col ~= -1 then
-          matches[lnum] = (matches[lnum] or 0) + 1
-        end
-        if count >= #config.symbols then
-          break
-        end
-        count = count + 1
-      until col == -1
-    end
-  end
-
-  cache[bufnr] = {
-    pattern = pattern,
-    changedtick = vim.b[bufnr].changedtick,
-    matches = matches,
-  }
-
-  return matches
-end
-
---- @param update fun()
-local refresh = async.void(function(update)
-  update_matches(api.nvim_get_current_buf())
-  -- Run update outside of an async context.
-  vim.schedule(update)
-end)
 
 --- @type Satellite.Handler
 local handler = {
@@ -148,35 +93,45 @@ function handler.setup(config0, update)
   })
 
   setup_hl()
-
-  api.nvim_create_autocmd('User', {
-    group = group,
-    pattern = 'Search',
-    callback = vim.schedule_wrap(function()
-      refresh(update)
-    end),
-  })
 end
 
---- @class SearchMark
---- @field count integer
---- @field highlight? string
---- @field unique? boolean
---- @field symbol? string
+--- @param bufnr integer
+--- @param pattern? string
+--- @return table<integer,integer>
+local function update_matches(bufnr, pattern)
+  local pos = vim.g.search_pos
+  if pos == nil then
+    return {}
+  end
+  local matches = {}
+  for _, s in ipairs(pos.sList) do
+    if matches[s[1]] == nil then
+      matches[s[1]] = 1
+    else
+      matches[s[1]] = matches[s[1]] + 1
+    end
+  end
+  bufnr = vim.api.nvim_get_current_buf()
+  cache[bufnr] = {
+    pattern = get_pattern(),
+    changedtick = vim.b[bufnr].changedtick,
+    matches = matches,
+  }
+  return matches
+end
 
 function handler.update(bufnr, winid)
-  local marks = {} --- @type SearchMark[]
-  local matches = update_matches(bufnr)
-
   if not api.nvim_buf_is_valid(bufnr) or not api.nvim_win_is_valid(winid) then
     return {}
   end
 
+  local marks = {} --- @type SearchMark[]
+
+  local matches = update_matches(bufnr)
+
   local cursor_lnum = api.nvim_win_get_cursor(winid)[1]
 
-  local pred = async.winbuf_pred(bufnr, winid)
-
-  for lnum, count in async.pairs(matches, pred) do
+  for lnum, count in pairs(matches) do
     local pos = util.row_to_barpos(winid, lnum - 1)
 
     if marks[pos] and marks[pos].count then

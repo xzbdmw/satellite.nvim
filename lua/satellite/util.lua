@@ -49,19 +49,19 @@ function M.virtual_line_count(winid, start, vend)
     return cached
   end
 
-  if api.nvim_win_text_height then
-    local ok, res = pcall(api.nvim_win_text_height, winid, {
-      start_row = start,
-      end_row = vend,
-    })
-    if ok then
-      if type(res) == 'table' then
-        res = res.all
-      end
-      virtual_line_count_cache[winid][start][vend] = res
-      return res
-    end
-  end
+  -- if api.nvim_win_text_height then
+  --   local ok, res = pcall(api.nvim_win_text_height, winid, {
+  --     start_row = start,
+  --     end_row = vend,
+  --   })
+  --   if ok then
+  --     if type(res) == 'table' then
+  --       res = res.all
+  --     end
+  --     virtual_line_count_cache[winid][start][vend] = res
+  --     return res
+  --   end
+  -- end
 
   return api.nvim_win_call(winid, function()
     local vline = 0
@@ -258,9 +258,12 @@ function M.noautocmd(f)
   return function(...)
     local eventignore = vim.o.eventignore
     vim.o.eventignore = 'all'
-    local r = { f(...) }
+    local r = { pcall(f, ...) }
     vim.o.eventignore = eventignore
-    return unpack(r)
+    if not r[1] then
+      error(r[2])
+    end
+    return unpack(r, 2, table.maxn(r))
   end
 end
 
