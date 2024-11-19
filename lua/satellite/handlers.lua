@@ -94,7 +94,12 @@ function Handler:apply_mark(bufnr, m, max_pos)
     if bar_winid and cfg.width == 2 then
       local hunks =
         require('gitsigns.actions').get_nav_hunks(api.nvim_get_current_buf(), 'all', true)
-      if #hunks == 0 and vim.fn.getcmdline() == '' and vim.v.hlsearch == 0 then
+      if
+        #hunks == 0
+        and vim.fn.getcmdline() == ''
+        and vim.v.hlsearch == 0
+        and not require('config.utils').has_namespace('illuminate.highlightkeep', 'highlight')
+      then
         cfg.col = cfg.col + 1
         cfg.width = 1
         if bar_winid and api.nvim_win_is_valid(bar_winid) then

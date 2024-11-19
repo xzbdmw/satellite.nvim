@@ -120,6 +120,23 @@ local function update_matches(bufnr, pattern)
   return matches
 end
 
+local function get_illuminate(winid)
+  local HL_K_NAMESPACE = vim.api.nvim_create_namespace('illuminate.highlightkeep')
+  local extmarks =
+    vim.api.nvim_buf_get_extmarks(0, HL_K_NAMESPACE, 0, -1, { details = true, type = 'highlight' })
+  local marks = {}
+  for _, extmark in ipairs(extmarks) do
+    local end_row = extmark[4].end_row
+    marks[#marks + 1] = {
+      ---@diagnostic disable-next-line: param-type-mismatch
+      pos = util.row_to_barpos(winid, end_row),
+      symbol = '=',
+      highlight = 'Type',
+    }
+  end
+  return marks
+end
+
 function handler.update(bufnr, winid)
   if not api.nvim_buf_is_valid(bufnr) or not api.nvim_win_is_valid(winid) then
     return {}
@@ -128,7 +145,10 @@ function handler.update(bufnr, winid)
   local marks = {} --- @type SearchMark[]
 
   local matches = update_matches(bufnr)
-
+  local illuminates = get_illuminate(winid)
+  if #illuminates > 0 then
+    return illuminates
+  end
   local cursor_lnum = api.nvim_win_get_cursor(winid)[1]
 
   for lnum, count in pairs(matches) do
