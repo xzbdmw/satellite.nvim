@@ -99,6 +99,7 @@ function Handler:apply_mark(bufnr, m, max_pos)
         and vim.fn.getcmdline() == ''
         and vim.v.hlsearch == 0
         and not require('config.utils').has_namespace('illuminate.highlightkeep', 'highlight')
+        and not require('config.utils').has_namespace('trouble.highlight', 'highlight')
       then
         cfg.col = cfg.col + 1
         cfg.width = 1
