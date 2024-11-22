@@ -153,9 +153,6 @@ local function can_show_scrollbar(winid)
   if vim.bo.buftype == 'nofile' then
     return false
   end
-  if vim.api.nvim_get_current_tabpage() ~= 1 then
-    return false
-  end
 
   -- Don't show in terminal mode, since the bar won't be properly updated for
   -- insertions.

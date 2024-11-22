@@ -60,6 +60,9 @@ function handler.update(bufnr, winid)
 
   local marks = {} --- @type Satellite.Mark[]
 
+  if vim.api.nvim_get_current_tabpage() ~= 1 then
+    return {}
+  end
   --- @type {type:string, added:{start: integer, count: integer}}[]
   local hunks = require('gitsigns').get_hunks(bufnr)
 
