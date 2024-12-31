@@ -92,8 +92,12 @@ function Handler:apply_mark(bufnr, m, max_pos)
 
     local cfg = vim.api.nvim_win_get_config(bar_winid)
     if bar_winid and cfg.width == 2 then
-      local hunks =
-        require('gitsigns.actions').get_nav_hunks(api.nvim_get_current_buf(), 'all', true)
+      local hunks
+      if not package.loaded.gitsigns then
+        hunks = {}
+      else
+        hunks = require('gitsigns.actions').get_nav_hunks(api.nvim_get_current_buf(), 'all', true)
+      end
       if
         #hunks == 0
         and vim.fn.getcmdline() == ''

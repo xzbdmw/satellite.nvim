@@ -30,6 +30,7 @@
     "unusedLocalExclude": [ "_*" ]
   },
     "diagnostics.disable": [
-        "no-unknown"
+        "no-unknown",
+        "lowercase-global"
     ]
 }
