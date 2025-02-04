@@ -96,7 +96,7 @@ function Handler:apply_mark(bufnr, m, max_pos)
       if not package.loaded.gitsigns then
         hunks = {}
       else
-        hunks = require('gitsigns.actions').get_nav_hunks(api.nvim_get_current_buf(), 'all', true)
+        hunks = require('gitsigns.actions').get_hunks(api.nvim_get_current_buf()) or {}
       end
       if
         #hunks == 0
