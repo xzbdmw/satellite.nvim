@@ -44,11 +44,6 @@ function M.virtual_line_count(winid, start, vend)
     return 0
   end
 
-  local cached = rawget(virtual_line_count_cache[winid][start], vend)
-  if cached then
-    return cached
-  end
-
   -- if api.nvim_win_text_height then
   --   local ok, res = pcall(api.nvim_win_text_height, winid, {
   --     start_row = start,
@@ -63,21 +58,22 @@ function M.virtual_line_count(winid, start, vend)
   --   end
   -- end
 
-  return api.nvim_win_call(winid, function()
-    local vline = 0
-    local line = start
-    while line <= vend do
-      vline = vline + 1
-      local foldclosedend = fn.foldclosedend(line)
-      if foldclosedend ~= -1 then
-        line = foldclosedend
-      end
-      -- This function is called a lot so cache every line
-      virtual_line_count_cache[winid][start][line] = vline
-      line = line + 1
-    end
-    return vline
-  end)
+  -- return api.nvim_win_call(winid, function()
+  --   local vline = 0
+  --   local line = start
+  --   while line <= vend do
+  --     vline = vline + 1
+  --     local foldclosedend = -1
+  --     if foldclosedend ~= -1 then
+  --       line = foldclosedend
+  --     end
+  --     -- This function is called a lot so cache every line
+  --     virtual_line_count_cache[winid][start][line] = vline
+  --     line = line + 1
+  --   end
+  --   return vline
+  -- end)
+  return vend - start
 end
 
 --- @type table<integer,integer[]>
