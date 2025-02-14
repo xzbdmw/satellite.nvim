@@ -154,6 +154,34 @@ local function get_trouble(winid)
   return marks
 end
 
+local function get_multi_cursor(winid)
+  local mc = require('multicursor-nvim')
+  if mc.numCursors() <= 1 then
+    return {}
+  end
+  local cursors = {}
+  mc.action(function(ctx)
+    if ctx == nil then
+      return
+    end
+    cursors = ctx:getCursors()
+  end)
+  if #cursors == 0 then
+    return
+  end
+  local marks = {}
+  for _, cursor in ipairs(cursors) do
+    local end_row = cursor._pos[2]
+    marks[#marks + 1] = {
+      ---@diagnostic disable-next-line: param-type-mismatch
+      pos = util.row_to_barpos(winid, end_row),
+      symbol = '=',
+      highlight = '@exception',
+    }
+  end
+  return marks
+end
+
 function handler.update(bufnr, winid)
   if not api.nvim_buf_is_valid(bufnr) or not api.nvim_win_is_valid(winid) then
     return {}
@@ -165,6 +193,10 @@ function handler.update(bufnr, winid)
   local illuminates = get_illuminate(winid)
   if #illuminates > 0 then
     return illuminates
+  end
+  local mc = get_multi_cursor(winid)
+  if #mc > 0 then
+    return mc
   end
   local trouble = get_trouble(winid)
   if #trouble > 0 then
