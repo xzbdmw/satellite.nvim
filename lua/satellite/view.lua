@@ -176,7 +176,7 @@ local function can_show_scrollbar(winid)
 
   -- Don't show the position bar when all lines are on screen.
   local topline, botline = util.visible_line_range(winid)
-  if botline - topline + 1 == line_count then
+  if botline - topline + 1 == line_count or botline - topline + 2 == line_count then
     return false
   end
 
@@ -235,57 +235,26 @@ function satellite_close(winid)
 end
 
 function M.refresh_bars()
-  local parser_installed = require('nvim-treesitter.parsers').has_parser(vim.bo.filetype)
-  if (not vim.b.ts_parse_over) and vim.bo.filetype ~= 'toggleterm' and parser_installed then
-    -- Close any remaining bars
-    for winid, _ in pairs(winids) do
-      pcall(function()
-        satellite_close(winid)
-      end)
-    end
-    local has_find = false
-    local timer = vim.uv.new_timer()
-    vim.defer_fn(function()
-      if timer:is_active() then
-        timer:close()
-      end
-    end, 100)
-    timer:start(5, 5, function()
-      if vim.b.ts_parse_over then
-        if has_find then
-          return
-        end
-        has_find = true
-        if timer:is_active() then
-          timer:close()
-        end
-        vim.schedule(function()
-          M.refresh_bars()
-        end)
-      end
-    end)
-  else
-    local current_bar_wins = {} --- @type integer[]
-    if enabled then
-      for _, winid in ipairs(get_target_windows()) do
-        if can_show_scrollbar(winid) then
-          -- pcall in case the window cannot be changed (#76)
-          local ok, bwinid_or_err = pcall(M.get_or_create_view, winid)
-          if ok then
-            render(bwinid_or_err, winid)
-            current_bar_wins[#current_bar_wins + 1] = bwinid_or_err
-          else
-            -- vim.notify(debug.traceback('satellite.nvim: unable to get a view'), vim.log.levels.INFO)
-          end
+  local current_bar_wins = {} --- @type integer[]
+  if enabled then
+    for _, winid in ipairs(get_target_windows()) do
+      if can_show_scrollbar(winid) then
+        -- pcall in case the window cannot be changed (#76)
+        local ok, bwinid_or_err = pcall(M.get_or_create_view, winid)
+        if ok then
+          render(bwinid_or_err, winid)
+          current_bar_wins[#current_bar_wins + 1] = bwinid_or_err
+        else
+          -- vim.notify(debug.traceback('satellite.nvim: unable to get a view'), vim.log.levels.INFO)
         end
       end
     end
+  end
 
-    -- Close any remaining bars
-    for winid, bwinid in pairs(winids) do
-      if not vim.tbl_contains(current_bar_wins, bwinid) then
-        satellite_close(winid)
-      end
+  -- Close any remaining bars
+  for winid, bwinid in pairs(winids) do
+    if not vim.tbl_contains(current_bar_wins, bwinid) then
+      satellite_close(winid)
     end
   end
 end

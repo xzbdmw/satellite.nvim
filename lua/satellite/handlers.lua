@@ -217,25 +217,10 @@ function M.render(bwinid, winid)
   end
 
   local start = vim.uv.hrtime()
-  local function follow_node()
-    local duration = 0.000001 * (vim.loop.hrtime() - start)
-    if duration > 2000 then
-      return
-    end
-    if vim.b.ts_parse_over then
-      render_fn()
-    else
-      vim.defer_fn(follow_node, 5)
-    end
-  end
 
-  local parser_installed = require('nvim-treesitter.parsers').has_parser(vim.bo.filetype)
+  local parser_installed = true
   if parser_installed then
     render_fn()
-  else
-    vim.defer_fn(function()
-      render_fn()
-    end, 20)
   end
 end
 
