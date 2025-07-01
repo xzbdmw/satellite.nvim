@@ -82,6 +82,7 @@ function Handler:apply_mark(bufnr, m, max_pos)
   local opts = {
     id = not m.unique and m.pos + 1 or nil,
     priority = self.config.priority,
+    hl_mode = 'combine',
   }
   local start_col = 0
   if self.config.overlap then
